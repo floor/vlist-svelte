@@ -1,18 +1,18 @@
-# @floor/vlist-svelte
+# vlist-svelte
 
 Svelte action for [vlist](https://github.com/floor/vlist) - lightweight, zero-dependency virtual scrolling.
 
 ## Installation
 
 ```bash
-npm install @floor/vlist @floor/vlist-svelte
+npm install @floor/vlist vlist-svelte
 ```
 
 ## Usage
 
 ```svelte
 <script>
-  import { vlist } from '@floor/vlist-svelte';
+  import { vlist } from 'vlist-svelte';
   import '@floor/vlist/styles';
 
   let users = [...];
@@ -45,7 +45,7 @@ npm install @floor/vlist @floor/vlist-svelte
 
 ```svelte
 <script>
-  import { vlist } from '@floor/vlist-svelte';
+  import { vlist } from 'vlist-svelte';
   
   let instance;
   

@@ -1,4 +1,4 @@
-// @floor/vlist-svelte
+// vlist-svelte
 /**
  * Svelte action for vlist - lightweight virtual scrolling
  *
@@ -61,7 +61,7 @@ export interface VListActionReturn<T extends VListItem = VListItem> {
  * @example
  * ```svelte
  * <script>
- *   import { vlist } from '@floor/vlist-svelte';
+ *   import { vlist } from 'vlist-svelte';
  *   import '@floor/vlist/styles';
  *
  *   let users = [...];
@@ -160,7 +160,7 @@ export function vlist<T extends VListItem = VListItem>(
  * @example
  * ```svelte
  * <script>
- *   import { vlist, onVListEvent } from '@floor/vlist-svelte';
+ *   import { vlist, onVListEvent } from 'vlist-svelte';
  *   
  *   let instance;
  *   
