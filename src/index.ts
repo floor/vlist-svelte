@@ -1,19 +1,16 @@
 // vlist-svelte
 /**
  * Svelte action for vlist - lightweight virtual scrolling
- *
- * @packageDocumentation
  */
 
 import type {
   VListConfig,
   VListItem,
-  VList,
   VListEvents,
   EventHandler,
   Unsubscribe,
 } from "@floor/vlist";
-import { vlist as createVList } from "@floor/vlist";
+import { vlist as createVListBuilder, type BuiltVList } from "@floor/vlist";
 import {
   withAsync,
   withGrid,
@@ -25,70 +22,27 @@ import {
   withPage,
 } from "@floor/vlist";
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/** Configuration for vlist action (VListConfig without container) */
 export type VListActionConfig<T extends VListItem = VListItem> = Omit<
   VListConfig<T>,
   "container"
 >;
 
-/** Options for the vlist action */
 export interface VListActionOptions<T extends VListItem = VListItem> {
-  /** VList configuration */
   config: VListActionConfig<T>;
-  /** Callback to receive the vlist instance */
-  onInstance?: (instance: VList<T>) => void;
+  onInstance?: (instance: BuiltVList<T>) => void;
 }
 
-/** Return value from the vlist action */
 export interface VListActionReturn<T extends VListItem = VListItem> {
-  /** Update the configuration */
   update?: (options: VListActionOptions<T>) => void;
-  /** Cleanup */
   destroy?: () => void;
 }
 
-// =============================================================================
-// Action
-// =============================================================================
-
-/**
- * Svelte action for vlist integration.
- *
- * @example
- * ```svelte
- * <script>
- *   import { vlist } from 'vlist-svelte';
- *   import '@floor/vlist/styles';
- *
- *   let users = [...];
- *   let instance;
- *
- *   const config = {
- *     item: {
- *       height: 48,
- *       template: (user) => `<div>${user.name}</div>`,
- *     },
- *     items: users,
- *   };
- * </script>
- *
- * <div
- *   use:vlist={{ config, onInstance: (i) => (instance = i) }}
- *   style="height: 400px"
- * />
- * ```
- */
 export function vlist<T extends VListItem = VListItem>(
   node: HTMLElement,
   options: VListActionOptions<T>,
 ): VListActionReturn<T> {
-  // Build vlist with plugins
   const config = options.config;
-  let builder = createVList<T>({
+  let builder = createVListBuilder<T>({
     ...config,
     container: node,
   });
@@ -111,7 +65,22 @@ export function vlist<T extends VListItem = VListItem>(
   }
 
   if (config.groups) {
-    builder = builder.use(withSections(config.groups));
+    const groupsConfig = config.groups;
+    const headerHeight =
+      typeof groupsConfig.headerHeight === "function"
+        ? groupsConfig.headerHeight("", 0)
+        : groupsConfig.headerHeight;
+
+    builder = builder.use(
+      withSections({
+        getGroupForIndex: groupsConfig.getGroupForIndex,
+        headerHeight,
+        headerTemplate: groupsConfig.headerTemplate,
+        ...(groupsConfig.sticky !== undefined && {
+          sticky: groupsConfig.sticky,
+        }),
+      }),
+    );
   }
 
   const selectionMode = config.selection?.mode || "none";
@@ -132,16 +101,14 @@ export function vlist<T extends VListItem = VListItem>(
 
   builder = builder.use(withSnapshots());
 
-  let instance: VList<T> = builder.build() as VList<T>;
+  let instance: BuiltVList<T> = builder.build();
 
-  // Notify consumer of the instance
   if (options.onInstance) {
     options.onInstance(instance);
   }
 
   return {
     update(newOptions: VListActionOptions<T>) {
-      // Update items if they changed
       if (newOptions.config.items && instance) {
         instance.setItems(newOptions.config.items);
       }
@@ -154,29 +121,11 @@ export function vlist<T extends VListItem = VListItem>(
   };
 }
 
-/**
- * Helper to subscribe to vlist events in Svelte
- *
- * @example
- * ```svelte
- * <script>
- *   import { vlist, onVListEvent } from 'vlist-svelte';
- *   
- *   let instance;
- *   
- *   $: if (instance) {
- *     onVListEvent(instance, 'selection:change', ({ selected }) => {
- *       console.log('Selected:', selected);
- *     });
- *   }
- * </script>
- * ```
- */
 export function onVListEvent<
   T extends VListItem,
   K extends keyof VListEvents<T>,
 >(
-  instance: VList<T>,
+  instance: BuiltVList<T>,
   event: K,
   handler: EventHandler<VListEvents<T>[K]>,
 ): Unsubscribe {
