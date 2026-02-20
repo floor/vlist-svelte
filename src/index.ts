@@ -32,7 +32,8 @@ export interface VListActionOptions<T extends VListItem = VListItem> {
   onInstance?: (instance: BuiltVList<T>) => void;
 }
 
-export interface VListActionReturn<T extends VListItem = VListItem> {
+export interface VListActionReturn<T extends VListItem = VListItem>
+  extends Partial<BuiltVList<T>> {
   update?: (options: VListActionOptions<T>) => void;
   destroy?: () => void;
 }
@@ -107,7 +108,12 @@ export function vlist<T extends VListItem = VListItem>(
     options.onInstance(instance);
   }
 
+  // Return instance methods plus update/destroy overrides
+  // Spread instance first, then override specific methods
+  const { destroy: instanceDestroy, ...instanceMethods } = instance;
+
   return {
+    ...instanceMethods,
     update(newOptions: VListActionOptions<T>) {
       if (newOptions.config.items && instance) {
         instance.setItems(newOptions.config.items);
