@@ -1,21 +1,20 @@
 # vlist-svelte
 
-Svelte action for [vlist](https://github.com/floor/vlist) - lightweight, zero-dependency virtual scrolling.
+Svelte action for [@floor/vlist](https://github.com/floor/vlist) — lightweight, zero-dependency virtual scrolling.
 
-## Installation
+## Install
 
 ```bash
 npm install @floor/vlist vlist-svelte
 ```
 
-## Usage
+## Quick Start
 
 ```svelte
 <script>
   import { vlist } from 'vlist-svelte';
   import '@floor/vlist/styles';
 
-  let users = [...];
   let instance;
 
   const config = {
@@ -35,32 +34,14 @@ npm install @floor/vlist vlist-svelte
 
 ## API
 
-### `vlist` action
+- **`vlist` action** — Svelte `use:` directive that creates a virtual list on the node. Pass `{ config, onInstance }`.
+- **`onVListEvent(instance, event, handler)`** — Subscribe to vlist events. Returns an unsubscribe function.
 
-**Parameters:**
-- `config` - VList configuration (same as core vlist, minus `container`)
-- `onInstance` - Callback to receive the vlist instance
-
-**Example with instance access:**
-
-```svelte
-<script>
-  import { vlist } from 'vlist-svelte';
-  
-  let instance;
-  
-  function scrollToTop() {
-    instance?.scrollToIndex(0);
-  }
-</script>
-
-<div use:vlist={{ config, onInstance: (i) => (instance = i) }} />
-<button on:click={scrollToTop}>Top</button>
-```
+Config accepts all [@floor/vlist options](https://vlist.dev/docs/api/reference) minus `container` (handled by the action). Feature fields like `adapter`, `grid`, `groups`, `selection`, and `scrollbar` are translated into `.use(withX())` calls automatically.
 
 ## Documentation
 
-For full documentation, see [vlist.dev](https://vlist.dev)
+Full usage guide, feature config examples, and TypeScript types: **[Framework Adapters — Svelte](https://vlist.dev/docs/frameworks#svelte)**
 
 ## License
 
