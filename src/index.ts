@@ -14,6 +14,7 @@ import { vlist as createVListBuilder, type VList } from "@floor/vlist";
 import {
   withAsync,
   withGrid,
+  withMasonry,
   withGroups,
   withSelection,
   withScrollbar,
@@ -63,6 +64,10 @@ export function vlist<T extends VListItem = VListItem>(
 
   if (config.layout === "grid" && config.grid) {
     builder = builder.use(withGrid(config.grid));
+  }
+
+  if (config.layout === "masonry" && config.masonry) {
+    builder = builder.use(withMasonry(config.masonry));
   }
 
   if (config.groups) {
