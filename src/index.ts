@@ -10,11 +10,11 @@ import type {
   EventHandler,
   Unsubscribe,
 } from "@floor/vlist";
-import { vlist as createVListBuilder, type BuiltVList } from "@floor/vlist";
+import { vlist as createVListBuilder, type VList } from "@floor/vlist";
 import {
   withAsync,
   withGrid,
-  withSections,
+  withGroups,
   withSelection,
   withScrollbar,
   withScale,
@@ -29,11 +29,11 @@ export type VListActionConfig<T extends VListItem = VListItem> = Omit<
 
 export interface VListActionOptions<T extends VListItem = VListItem> {
   config: VListActionConfig<T>;
-  onInstance?: (instance: BuiltVList<T>) => void;
+  onInstance?: (instance: VList<T>) => void;
 }
 
 export interface VListActionReturn<T extends VListItem = VListItem>
-  extends Partial<BuiltVList<T>> {
+  extends Partial<VList<T>> {
   update?: (options: VListActionOptions<T>) => void;
   destroy?: () => void;
 }
@@ -73,7 +73,7 @@ export function vlist<T extends VListItem = VListItem>(
         : groupsConfig.headerHeight;
 
     builder = builder.use(
-      withSections({
+      withGroups({
         getGroupForIndex: groupsConfig.getGroupForIndex,
         headerHeight,
         headerTemplate: groupsConfig.headerTemplate,
@@ -102,7 +102,7 @@ export function vlist<T extends VListItem = VListItem>(
 
   builder = builder.use(withSnapshots());
 
-  let instance: BuiltVList<T> = builder.build();
+  let instance: VList<T> = builder.build();
 
   if (options.onInstance) {
     options.onInstance(instance);
@@ -131,7 +131,7 @@ export function onVListEvent<
   T extends VListItem,
   K extends keyof VListEvents<T>,
 >(
-  instance: BuiltVList<T>,
+  instance: VList<T>,
   event: K,
   handler: EventHandler<VListEvents<T>[K]>,
 ): Unsubscribe {
