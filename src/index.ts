@@ -24,6 +24,18 @@ import {
   withPage,
 } from "vlist";
 
+// Re-export types that appear in VListActionConfig / VListActionReturn
+export type {
+  VListItem,
+  VListEvents,
+  VList,
+  VListConfig,
+  ItemConfig,
+  ItemTemplate,
+  EventHandler,
+  Unsubscribe,
+} from "vlist";
+
 export type VListActionConfig<T extends VListItem = VListItem> = Omit<
   VListConfig<T>,
   "container"

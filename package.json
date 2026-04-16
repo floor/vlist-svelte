@@ -1,6 +1,6 @@
 {
   "name": "vlist-svelte",
-  "version": "1.5.4",
+  "version": "1.6.0",
   "description": "Svelte action for vlist - lightweight virtual scrolling",
   "author": {
     "name": "Floor IO",
