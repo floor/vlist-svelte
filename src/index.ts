@@ -23,7 +23,7 @@ export type {
   EventHandler,
   Unsubscribe,
 } from "vlist";
-export type { VListConfig } from "vlist/config";
+export type { VListConfig, VListFactory } from "vlist/config";
 
 /**
  * Configuration for the {@link vlist} action. vlist's high-level `VListConfig`
