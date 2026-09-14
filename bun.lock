@@ -13,7 +13,7 @@
       },
       "peerDependencies": {
         "svelte": ">=3.0.0",
-        "vlist": "^1.5.0",
+        "vlist": "^2.8.0",
       },
     },
   },

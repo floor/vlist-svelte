@@ -46,3 +46,23 @@ Full usage guide, feature config examples, and TypeScript types: **[Framework Ad
 ## License
 
 MIT © [Floor IO](https://floor.io)
+
+## Synthetic input
+
+Requires `vlist ^2.8.0`. Pass the synthetic entry as `factory` to opt in; the adapter forwards it unchanged through `vlist/config`. `VListFactory` is re-exported for typed custom factories. The factory is selected at mount; remount to change it.
+
+```svelte
+<script lang="ts">
+  import { vlist, type VListActionConfig } from "vlist-svelte";
+  import { createVList } from "vlist/synthetic";
+
+  const config: VListActionConfig<{ id: number }> = {
+    factory: createVList,
+    scroll: { mode: "synthetic" },
+    items: Array.from({ length: 1000 }, (_, id) => ({ id })),
+    item: { height: 48, template: item => String(item.id) },
+  };
+</script>
+
+<div use:vlist={{ config }} style="height: 400px" />
+```
