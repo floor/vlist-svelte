@@ -10,7 +10,7 @@ import type {
   Unsubscribe,
 } from "vlist";
 import type { VList } from "vlist";
-import { createVListFromConfig, type VListConfig } from "vlist/config";
+import { createVListFromConfig, type VListConfig, type ConfigItem, type ConfigMethods } from "vlist/config";
 
 // Re-export types that appear in VListActionConfig / VListActionReturn
 export type {
@@ -23,7 +23,7 @@ export type {
   EventHandler,
   Unsubscribe,
 } from "vlist";
-export type { VListConfig, VListFactory } from "vlist/config";
+export type { VListConfig, VListFactory, ConfigItem, ConfigMethods } from "vlist/config";
 
 /**
  * Configuration for the {@link vlist} action. vlist's high-level `VListConfig`
@@ -33,25 +33,38 @@ export type { VListConfig, VListFactory } from "vlist/config";
  */
 export type VListActionConfig<T extends VListItem = VListItem> = VListConfig<T>;
 
-export interface VListActionOptions<T extends VListItem = VListItem> {
-  config: VListActionConfig<T>;
-  onInstance?: (instance: VList<T>) => void;
+/**
+ * The list a config builds: its item type read from `items` or the template,
+ * and the methods its feature fields wire — `selection` brings `select()`,
+ * `adapter` brings `reload()`, `layout: "grid"` brings `getGridLayout()`.
+ */
+export type VListActionInstance<C extends VListActionConfig<any>> =
+  VList<ConfigItem<C>> & ConfigMethods<ConfigItem<C>, C>;
+
+export interface VListActionOptions<C extends VListActionConfig<any> = VListActionConfig> {
+  config: C;
+  onInstance?: (instance: VListActionInstance<C>) => void;
 }
 
-export interface VListActionReturn<
-  T extends VListItem = VListItem,
-> extends Partial<VList<T>> {
-  update?: (options: VListActionOptions<T>) => void;
-  destroy?: () => void;
-}
+/** The action's return: the instance's methods, with `update` and `destroy` the action's own. */
+export type VListActionReturn<C extends VListActionConfig<any> = VListActionConfig> =
+  Partial<VListActionInstance<C>> & {
+    update?: (options: VListActionOptions<C>) => void;
+    destroy?: () => void;
+  };
 
-export function vlist<T extends VListItem = VListItem>(
+/**
+ * One type parameter, the config itself, inferred from `options.config`. Do
+ * not pass a type argument: the item type comes from `items` or
+ * `item.template`, and the plugin methods from the feature fields.
+ */
+export function vlist<const C extends VListActionConfig<any>>(
   node: HTMLElement,
-  options: VListActionOptions<T>,
-): VListActionReturn<T> {
+  options: VListActionOptions<C>,
+): VListActionReturn<C> {
   const config = options.config;
 
-  let instance: VList<T> = createVListFromConfig<T>({ ...config, container: node });
+  const instance = createVListFromConfig({ ...config, container: node }) as VListActionInstance<C>;
 
   if (options.onInstance) {
     options.onInstance(instance);
@@ -63,7 +76,7 @@ export function vlist<T extends VListItem = VListItem>(
 
   return {
     ...instanceMethods,
-    update(newOptions: VListActionOptions<T>) {
+    update(newOptions: VListActionOptions<C>) {
       if (newOptions.config.items && instance) {
         instance.setItems(newOptions.config.items);
       }
@@ -73,7 +86,7 @@ export function vlist<T extends VListItem = VListItem>(
         instance.destroy();
       }
     },
-  };
+    } as VListActionReturn<C>;
 }
 
 export function onVListEvent<
