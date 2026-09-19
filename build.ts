@@ -5,7 +5,7 @@ const isDev = process.argv.includes("--watch");
 
 async function build() {
   const start = performance.now();
-  console.log("🔨 Building @floor/vlist-svelte...\n");
+  console.log("🔨 Building vlist-svelte...\n");
 
   // Build the Svelte action
   const buildResult = await Bun.build({
