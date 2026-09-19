@@ -45,7 +45,7 @@ Full usage guide, feature config examples, and TypeScript types: **[Framework Ad
 
 ## Synthetic input
 
-Requires `vlist ^2.8.0`. Pass the synthetic entry as `factory` to opt in; the adapter forwards it unchanged through `vlist/config`. `VListFactory` is re-exported for typed custom factories. The factory is selected at mount; remount to change it.
+Requires `vlist ^3.0.0-next.1`. Pass the synthetic entry as `factory` to opt in; the adapter forwards it unchanged through `vlist/config`. `VListFactory` is re-exported for typed custom factories. The factory is selected at mount; remount to change it.
 
 ```svelte
 <script lang="ts">
@@ -54,7 +54,6 @@ Requires `vlist ^2.8.0`. Pass the synthetic entry as `factory` to opt in; the ad
 
   const config: VListActionConfig<{ id: number }> = {
     factory: createVList,
-    scroll: { mode: "synthetic" },
     items: Array.from({ length: 1000 }, (_, id) => ({ id })),
     item: { height: 48, template: item => String(item.id) },
   };

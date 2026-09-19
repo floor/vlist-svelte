@@ -51,7 +51,10 @@ export function vlist<T extends VListItem = VListItem>(
 ): VListActionReturn<T> {
   const config = options.config;
 
-  let instance: VList<T> = createVListFromConfig<T>({ ...config, container: node });
+  // No type argument: vlist 3 takes two (the item and the config, so the
+  // instance carries the methods the config's feature fields imply), and
+  // both are inferred from the argument.
+  let instance: VList<T> = createVListFromConfig({ ...config, container: node });
 
   if (options.onInstance) {
     options.onInstance(instance);
