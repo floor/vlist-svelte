@@ -13,7 +13,7 @@ import type { VListFactory } from "./index";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { vlist } from "./index";
-import { grid, autosize, type VListItem } from "vlist";
+import { autosize, selection, type VListItem } from "vlist";
 import type { VListActionConfig } from "./index";
 
 interface Row extends VListItem {
@@ -34,7 +34,13 @@ function installLayoutShims(): () => void {
     private cb: ResizeObserverCallback;
     constructor(cb: ResizeObserverCallback) { this.cb = cb; }
     observe(target: Element): void {
-      this.cb([{ target, contentRect: { width: VIEWPORT_W, height: VIEWPORT_H } as DOMRectReadOnly } as ResizeObserverEntry], this as unknown as ResizeObserver);
+      this.cb([{
+        target,
+        contentRect: { width: VIEWPORT_W, height: VIEWPORT_H } as DOMRectReadOnly,
+        // A real ResizeObserverEntry carries both, and autosize() measures
+        // the border box. Without this the shim crashes it.
+        borderBoxSize: [{ inlineSize: VIEWPORT_W, blockSize: VIEWPORT_H }] as unknown as readonly ResizeObserverSize[],
+      } as ResizeObserverEntry], this as unknown as ResizeObserver);
     }
     unobserve(): void {}
     disconnect(): void {}
@@ -77,10 +83,14 @@ describe("vlist action — render", () => {
   });
 
   it("#119: accepts and runs a plugins array overlapping auto-wiring", async () => {
+    // estimatedHeight auto-wires autosize; the user passes autosize() as well.
+    // Must not throw "Duplicate plugin". (Until 3.0 this also passed grid(),
+    // which declares a conflict with autosize — a combination vlist refuses
+    // by design, and beside the point of #119.)
     const { node, action } = await apply({
       item: { estimatedHeight: 200, template },
       items: rows(200),
-      plugins: [grid({ columns: 3 }), autosize()],
+      plugins: [autosize(), selection({ mode: "single" })],
     });
     expect(node.querySelectorAll(".row").length).toBeGreaterThan(0);
     action.destroy?.();
@@ -96,12 +106,15 @@ it("forwards a typed synthetic factory and creates the synthetic driver", async 
     expect(config).not.toHaveProperty("factory");
     return createSynthetic(config, plugins);
   };
+  // vlist 3: the factory is what selects synthetic input — `scroll.mode` is gone,
+  // and with it the plugins that option used to wire. A feature field still
+  // resolves to a plugin, which is what proves the action forwards them.
   const { node, action } = await apply({
-    factory, scroll: { mode: "synthetic" }, items: rows(100), item: { height: 40, template },
+    factory, items: rows(100), item: { height: 40, template }, selection: { mode: "single" },
   });
   try {
     expect(calls).toBe(1);
     expect(node.querySelector<HTMLElement>(".vlist-viewport")!.style.touchAction).toBe("pan-x pinch-zoom");
-    expect(pluginNames).toEqual(["selection", "scale", "scrollbar", "snapshots"]);
+    expect(pluginNames).toEqual(["selection"]);
   } finally { action.destroy?.(); node.remove(); }
 });

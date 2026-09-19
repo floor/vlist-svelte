@@ -1,11 +1,11 @@
 # vlist-svelte
 
-Svelte action for [@floor/vlist](https://github.com/floor/vlist) — lightweight, zero-dependency virtual scrolling.
+Svelte action for [vlist](https://github.com/floor/vlist) — lightweight, zero-dependency virtual scrolling.
 
 ## Install
 
 ```bash
-npm install @floor/vlist vlist-svelte
+npm install vlist vlist-svelte
 ```
 
 ## Quick Start
@@ -13,7 +13,7 @@ npm install @floor/vlist vlist-svelte
 ```svelte
 <script>
   import { vlist } from 'vlist-svelte';
-  import '@floor/vlist/styles';
+  import 'vlist/styles';
 
   let instance;
 
@@ -37,7 +37,7 @@ npm install @floor/vlist vlist-svelte
 - **`vlist` action** — Svelte `use:` directive that creates a virtual list on the node. Pass `{ config, onInstance }`.
 - **`onVListEvent(instance, event, handler)`** — Subscribe to vlist events. Returns an unsubscribe function.
 
-Config accepts all [@floor/vlist options](https://vlist.dev/docs/api/reference) minus `container` (handled by the action). Feature fields like `adapter`, `grid`, `groups`, `selection`, `scrollbar`, and `estimatedHeight` are translated into `.use(withX())` calls automatically.
+Config accepts all [vlist options](https://vlist.dev/docs/api/reference) minus `container` (handled by the action). Feature fields like `adapter`, `grid`, `groups`, `selection`, `scrollbar`, and `estimatedHeight` are resolved into plugins automatically.
 
 ## Documentation
 
@@ -45,7 +45,7 @@ Full usage guide, feature config examples, and TypeScript types: **[Framework Ad
 
 ## Synthetic input
 
-Requires `vlist ^2.8.0`. Pass the synthetic entry as `factory` to opt in; the adapter forwards it unchanged through `vlist/config`. `VListFactory` is re-exported for typed custom factories. The factory is selected at mount; remount to change it.
+Requires `vlist ^3.0.0-next.1`. Pass the synthetic entry as `factory` to opt in; the adapter forwards it unchanged through `vlist/config`. `VListFactory` is re-exported for typed custom factories. The factory is selected at mount; remount to change it.
 
 ```svelte
 <script lang="ts">
@@ -54,7 +54,6 @@ Requires `vlist ^2.8.0`. Pass the synthetic entry as `factory` to opt in; the ad
 
   const config: VListActionConfig<{ id: number }> = {
     factory: createVList,
-    scroll: { mode: "synthetic" },
     items: Array.from({ length: 1000 }, (_, id) => ({ id })),
     item: { height: 48, template: item => String(item.id) },
   };
