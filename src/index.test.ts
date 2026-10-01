@@ -12,7 +12,7 @@ import type { VListFactory } from "./index";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import { vlist } from "./index";
+import { vlist, onVListEvent } from "./index";
 import { autosize, selection, type VListItem } from "vlist";
 import type { VListActionConfig } from "./index";
 
@@ -130,4 +130,48 @@ it("forwards scroll.mode: the list goes synthetic and draws its scrollbar", asyn
     expect(viewport.style.touchAction).toBe("pan-x pinch-zoom");
     expect(node.querySelectorAll(".vlist-scrollbar")).toHaveLength(1);
   } finally { action.destroy?.(); node.remove(); }
+});
+
+describe("3.1 compat: the config API on vlist/svelte", () => {
+  it("resolves a feature field to its plugin, and the action carries the instance's methods", async () => {
+    let fromCallback: unknown = null;
+    const node = document.createElement("div");
+    document.body.appendChild(node);
+    const action = vlist<Row>(node, {
+      config: { item: { height: 40, template }, items: rows(10), selection: { mode: "single" } },
+      onInstance: (list) => { fromCallback = list; },
+    });
+    await flush();
+    const methods = action as unknown as { select(id: string): void; getSelected(): unknown[]; scrollToIndex: unknown };
+    expect(typeof methods.scrollToIndex).toBe("function");
+    methods.select("row-2");
+    expect(methods.getSelected()).toEqual(["row-2"]);
+    expect((fromCallback as { getSelected(): unknown[] }).getSelected()).toEqual(["row-2"]);
+    action.destroy?.();
+  });
+
+  it("update() replaces the items", async () => {
+    const { node, action } = await apply({ item: { height: 40, template }, items: rows(3) });
+    expect(node.querySelectorAll(".row").length).toBe(3);
+    action.update?.({ config: { item: { height: 40, template }, items: rows(5) } });
+    await flush();
+    expect(node.querySelectorAll(".row").length).toBe(5);
+    action.destroy?.();
+  });
+
+  it("onVListEvent receives events until unsubscribed", async () => {
+    const clicked: string[] = [];
+    const node = document.createElement("div");
+    document.body.appendChild(node);
+    let list!: Parameters<typeof onVListEvent<Row, "item:click">>[0];
+    const action = vlist<Row>(node, { config: { item: { height: 40, template }, items: rows(10) }, onInstance: (l) => { list = l; } });
+    await flush();
+    const off = onVListEvent(list, "item:click", ({ item }) => { clicked.push(item.id); });
+    const row = () => node.querySelector<HTMLElement>('[data-index="2"]')!;
+    row().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    off();
+    row().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(clicked).toEqual(["row-2"]);
+    action.destroy?.();
+  });
 });

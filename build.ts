@@ -16,7 +16,7 @@ async function build() {
     minify: !isDev,
     sourcemap: isDev ? "inline" : "none",
     naming: "index.js",
-    external: ["svelte", "vlist", "vlist/config"],
+    external: ["svelte", "vlist", "vlist/config", "vlist/svelte"],
   });
 
   if (!buildResult.success) {
