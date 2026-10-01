@@ -1,16 +1,19 @@
 // vlist-svelte
 /**
  * Svelte action for vlist - lightweight virtual scrolling
+ *
+ * Deprecated: use `vlist/svelte` from the vlist package, which takes features
+ * as plugins (`use:vlist={{ config: { items, item }, plugins: [selection()] }}`).
+ * This package keeps the config-based API on top of it: the action is
+ * `vlist/svelte`'s, building the list with `createVListFromConfig` so feature
+ * fields still resolve to plugins.
  */
 
-import type {
-  VListItem,
-  VListEvents,
-  EventHandler,
-  Unsubscribe,
-} from "vlist";
-import type { VList } from "vlist";
+import type { VListItem, VList } from "vlist";
 import { createVListFromConfig, type VListConfig } from "vlist/config";
+import { vlist as entry, onVListEvent } from "vlist/svelte";
+
+export { onVListEvent };
 
 // Re-export types that appear in VListActionConfig / VListActionReturn
 export type {
@@ -45,47 +48,30 @@ export interface VListActionReturn<
   destroy?: () => void;
 }
 
+type EntryOptions<T extends VListItem> = Parameters<typeof entry<T>>[1];
+
+/** `vlist/svelte`'s factory option: builds from the whole config. */
+const fromConfig = createVListFromConfig as unknown as EntryOptions<VListItem>["create"];
+
 export function vlist<T extends VListItem = VListItem>(
   node: HTMLElement,
   options: VListActionOptions<T>,
 ): VListActionReturn<T> {
-  const config = options.config;
+  let instance!: VList<T>;
+  const action = entry<T>(node, {
+    config: options.config as EntryOptions<T>["config"],
+    create: fromConfig,
+    onInstance: (list) => {
+      instance = list;
+      options.onInstance?.(list);
+    },
+  });
 
-  // No type argument: vlist 3 takes two (the item and the config, so the
-  // instance carries the methods the config's feature fields imply), and
-  // both are inferred from the argument.
-  let instance: VList<T> = createVListFromConfig({ ...config, container: node });
-
-  if (options.onInstance) {
-    options.onInstance(instance);
-  }
-
-  // Return instance methods plus update/destroy overrides
-  // Spread instance first, then override specific methods
-  const { destroy: instanceDestroy, ...instanceMethods } = instance;
-
+  // As before 3.1, the action also carries the instance's methods.
+  const { destroy: _destroy, ...methods } = instance;
   return {
-    ...instanceMethods,
-    update(newOptions: VListActionOptions<T>) {
-      if (newOptions.config.items && instance) {
-        instance.setItems(newOptions.config.items);
-      }
-    },
-    destroy() {
-      if (instance) {
-        instance.destroy();
-      }
-    },
+    ...methods,
+    update: (next) => action.update({ config: next.config as EntryOptions<T>["config"] }),
+    destroy: action.destroy,
   };
-}
-
-export function onVListEvent<
-  T extends VListItem,
-  K extends keyof VListEvents<T>,
->(
-  instance: VList<T>,
-  event: K,
-  handler: EventHandler<VListEvents<T>[K]>,
-): Unsubscribe {
-  return instance.on(event, handler);
 }
