@@ -73,8 +73,8 @@ export type VListActionReturn<
 
 type WithPlugin<T extends VListItem, M> = Omit<VListActionConfig<T>, "plugins"> & {
   plugins:
-    | readonly [VListPlugin<any, M>, ...(readonly VListPlugin<any, any>[])]
-    | readonly [...(readonly VListPlugin<any, any>[]), VListPlugin<any, M>];
+    | readonly [VListPlugin<T, M>, ...(readonly VListPlugin<T, unknown>[])]
+    | readonly [...(readonly VListPlugin<T, unknown>[]), VListPlugin<T, M>];
 };
 
 type EntryOptions<T extends VListItem> = Parameters<typeof entry<T>>[1];
