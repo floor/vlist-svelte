@@ -12,8 +12,8 @@ import type { VListFactory } from "./index";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import { vlist, onVListEvent } from "./index";
-import { autosize, selection, type VListItem } from "vlist";
+import { vlist, onVListEvent, type TableColumn } from "./index";
+import { autosize, columnPin, columnReorder, selection, table, type VListItem } from "vlist";
 import type { VListActionConfig } from "./index";
 
 interface Row extends VListItem {
@@ -173,5 +173,87 @@ describe("3.1 compat: the config API on vlist/svelte", () => {
     row().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(clicked).toEqual(["row-2"]);
     action.destroy?.();
+  });
+
+  it("types and runs table({ features: [columnPin(), columnReorder()] }) without casts", async () => {
+    interface TableRow extends VListItem {
+      id: string;
+      name: string;
+      role: string;
+    }
+    const columns: TableColumn<TableRow>[] = [
+      { key: "name", label: "Name", width: 150 },
+      { key: "role", label: "Role", width: 100 },
+    ];
+    const tableRows: TableRow[] = [
+      { id: "1", name: "Ada", role: "Engineer" },
+      { id: "2", name: "Grace", role: "Architect" },
+    ];
+
+    const node = document.createElement("div");
+    Object.defineProperty(node, "style", { value: { height: `${VIEWPORT_H}px` }, configurable: true });
+    document.body.appendChild(node);
+
+    let orderFromCallback: string[] = [];
+    const action = vlist(node, {
+      config: {
+        items: tableRows,
+        item: { height: 40, template: (r) => r.name },
+        plugins: [
+          table({
+            columns,
+            rowHeight: 40,
+            features: [columnPin(), columnReorder()],
+          }),
+        ],
+      },
+      onInstance: (list) => {
+        list.moveColumn("role", 0);
+        orderFromCallback = list.getColumnOrder();
+      },
+    });
+    await flush();
+
+    action.setColumnPin!("name", "left");
+    expect(orderFromCallback).toEqual(["role", "name"]);
+    expect(action.getColumnPins!()).toEqual({ name: "left" });
+    expect(node.querySelector(".vlist-table-header-cell--pin-left")).not.toBeNull();
+
+    const verifyExplicit = (target: HTMLElement) => {
+      const explicit = vlist<TableRow>(target, {
+        config: {
+          items: tableRows,
+          item: { height: 40, template: (r) => r.name },
+          plugins: [
+            table<TableRow>({
+              columns,
+              rowHeight: 40,
+              features: [columnPin(), columnReorder()],
+            }),
+          ],
+        },
+        onInstance: (list) => {
+          list.setColumnPin("name", "right");
+          list.moveColumn("name", 1);
+        },
+      });
+      explicit.setColumnPin?.("name", "right");
+      explicit.moveColumn?.("name", 1);
+
+      const pinOnly = vlist<TableRow>(target, {
+        config: {
+          items: tableRows,
+          item: { height: 40, template: (r) => r.name },
+          plugins: [table<TableRow>({ columns, rowHeight: 40, features: [columnPin()] })],
+        },
+      });
+      pinOnly.setColumnPin?.("name", "left");
+      // @ts-expect-error columnReorder() was not configured on pinOnly
+      pinOnly.moveColumn?.("role", 0);
+    };
+    void verifyExplicit;
+
+    action.destroy?.();
+    node.remove();
   });
 });
