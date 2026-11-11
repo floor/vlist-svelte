@@ -15,7 +15,7 @@ Svelte action for [vlist](https://github.com/floor/vlist) — lightweight, zero-
 > use:vlist={{ config: { items, item }, plugins: [selection({ mode: "single" })] }}
 > ```
 >
-> From 3.1 this package is built on `vlist/svelte` and keeps its config-based API, so existing code keeps working while you migrate. It needs `vlist ^3.1.0`; on vlist 3.0.x, stay on `vlist-svelte` 3.0.x.
+> From 3.1 this package is built on `vlist/svelte` and keeps its config-based API, so existing code keeps working while you migrate. It needs `vlist ^3.7.0`; on vlist 3.1–3.6, stay on `vlist-svelte` 3.1.0; on vlist 3.0.x, stay on `vlist-svelte` 3.0.x.
 
 ## Install
 
@@ -52,11 +52,63 @@ npm install vlist vlist-svelte
 - **`vlist` action** — Svelte `use:` directive that creates a virtual list on the node. Pass `{ config, onInstance }`.
 - **`onVListEvent(instance, event, handler)`** — Subscribe to vlist events. Returns an unsubscribe function.
 
-Config accepts all [vlist options](https://vlist.dev/docs/api/reference) minus `container` (handled by the action). Feature fields like `adapter`, `grid`, `groups`, `selection`, `scrollbar`, and `estimatedHeight` are resolved into plugins automatically.
+Config accepts all [vlist options](https://vlist.dev/docs/api/reference) minus `container` (handled by the action). Feature fields like `adapter`, `grid`, `groups`, `selection`, `scrollbar`, and `estimatedHeight` are resolved into plugins automatically; `plugins` passes explicit plugins like `table({ features })` through unchanged, and both `onInstance` and the returned action carry the methods they add.
 
 ## Documentation
 
 Full usage guide, feature config examples, and TypeScript types: **[Framework Adapters — Svelte](https://vlist.dev/docs/frameworks#svelte)**
+
+## Table features
+
+Pass `table()` and its optional `features` (`columnPin()`, `columnReorder()`) in `plugins`. Give the table a `rowHeight` and `item` a fixed `height` (not `estimatedHeight`, which wires `autosize()` and conflicts with `table()`). Both the `onInstance` callback and the returned action carry the table and feature methods (`setColumnPin`, `getColumnPins`, `moveColumn`, `getColumnOrder`) without a cast; `TableColumn` and the table feature types are re-exported. Requires `vlist ^3.7.0`.
+
+```svelte
+<script lang="ts">
+  import { vlist, type TableColumn } from "vlist-svelte";
+  import { table, columnPin, columnReorder } from "vlist";
+  import "vlist/styles";
+  import "vlist/styles/table";
+
+  interface Row {
+    id: number;
+    name: string;
+    role: string;
+  }
+
+  const rows: Row[] = [
+    { id: 1, name: "Ada", role: "Engineer" },
+    { id: 2, name: "Grace", role: "Architect" },
+  ];
+
+  const columns: TableColumn<Row>[] = [
+    { key: "name", label: "Name", width: 180 },
+    { key: "role", label: "Role", width: 140 },
+  ];
+
+  const config = {
+    items: rows,
+    item: { height: 40, template: (row: Row) => row.name },
+    plugins: [
+      table<Row>({
+        columns,
+        rowHeight: 40,
+        features: [columnPin(), columnReorder()],
+      }),
+    ],
+  };
+</script>
+
+<div
+  use:vlist={{
+    config,
+    onInstance: (list) => {
+      list.setColumnPin("name", "left");
+      list.moveColumn("role", 0);
+    },
+  }}
+  style="height: 400px"
+/>
+```
 
 ## Synthetic input
 
