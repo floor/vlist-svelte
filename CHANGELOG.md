@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-11-12
+
 ### Added
 
 - `vlist` (`onInstance` and `VListActionReturn`) carries the plugin methods resolved from the config (`ConfigMethods`), including `table({ features: [columnPin(), columnReorder()] })` when passed in `plugins` (with or without an explicit `<T>` type argument on `vlist` or `table`).
